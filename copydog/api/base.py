@@ -15,6 +15,7 @@ class MissingProperty(ApiException):
     def __str__(self):
         return 'API object {0} is missing attribute "{1}"'.format(*self.args)
 
+
 class ApiObject(object):
     date_fields = tuple()
 

@@ -14,7 +14,7 @@ class Storage(BaseStorage):
 
     def __init__(self, storage_options=None):
         if not storage_options:
-            storage_options  = {}
+            storage_options = {}
         self.redis = redis.StrictRedis(**storage_options)
 
     def get_opposite_item_id(self, service_name, id):
@@ -23,10 +23,10 @@ class Storage(BaseStorage):
     def get_list_or_status_id(self, service_name, id):
         return self.redis.hget('{service_name}:list_status_mapping'.format(service_name=service_name), id)
 
-    def set_list_or_status_id(self, redmine_id, trello_id):
+    def set_list_or_status_id(self, bitbucket_id, trello_id):
         pipe = self.redis.pipeline()
-        pipe.hset('redmine:list_status_mapping', redmine_id, trello_id)
-        pipe.hset('trello:list_status_mapping', trello_id, redmine_id)
+        pipe.hset('redmine:list_status_mapping', bitbucket_id, trello_id)
+        pipe.hset('trello:list_status_mapping', trello_id, bitbucket_id)
         pipe.execute()
 
     def get_user_or_member_id(self, service_name, id):

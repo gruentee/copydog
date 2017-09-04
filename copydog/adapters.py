@@ -3,7 +3,9 @@ from logging import getLogger
 import pprint
 from api.trello import Trello
 from api.redmine import Redmine
-from copydog.api.redmine import Issue
+from api.bitbucket import Bitbucket
+# from copydog.api.redmine import Issue
+from copydog.api.bitbucket import Issue
 from copydog.api.trello import Card
 from copydog.utils import pandoc
 
@@ -126,7 +128,7 @@ class TrelloAdapter(BaseAdapter):
 
     def convert_to_local_issue(self, foreign_issue):
         assert isinstance(foreign_issue, Issue)
-        service_from = 'redmine'
+        service_from = 'bitbucket'
         if hasattr(foreign_issue, 'assigned_to'):
             idMembers = [self.storage.get_user_or_member_id(service_from, foreign_issue.assigned_to['id'])]
         else:
@@ -134,8 +136,8 @@ class TrelloAdapter(BaseAdapter):
         card = Card(
             id = self.storage.get_opposite_item_id(service_from, foreign_issue.id),
             idMembers = idMembers,
-            name = foreign_issue.subject,
-            desc = pandoc.convert(foreign_issue.get('description'), 'textile', 'markdown'),
+            name = foreign_issue.title,
+            desc = foreign_issue.get('content', {}).get('raw'),
             idList = self.storage.get_list_or_status_id(service_from, foreign_issue.status['id']),
             idBoard = self.config.board_id,
             due = foreign_issue.get('due_date', 'null'),
@@ -152,4 +154,40 @@ class TrelloAdapter(BaseAdapter):
             issue_url=foreign_issue.get_url()
         )
         self.client.post(path='cards/{card_id}/actions/comments'.format(card_id=issue.id),
-            data={'text': text})
+                         data={'text': text})
+
+
+class BitbucketAdapter(BaseAdapter):
+    service_name = 'bitbucket'
+
+    def get_client(self, options):
+        return Bitbucket(username=options['username'], password=options['password'])
+
+    def get_issues_since_last_sync(self, last_read):
+        issues = self.client.issues(repository=self.config['repository'], updated__after=last_read)
+        return issues
+
+    def convert_to_local_issue(self, foreign_issue):
+        assert isinstance(foreign_issue, Card)
+        service_from = 'trello'
+
+        if len(foreign_issue.idMembers):
+            assigned_to_id = self.storage.get_user_or_member_id(service_from, foreign_issue.idMembers[0])
+        else:
+            assigned_to_id = None
+        # TODO: Status setzen
+        issue = Issue(
+            id = self.storage.get_opposite_item_id(service_from, foreign_issue.id),
+            assignee = assigned_to_id,
+            title = foreign_issue.name,
+            content = foreign_issue.desc,
+            # status_id = self.storage.get_list_or_status_id(service_from, foreign_issue.idList),
+            repository = self.config.get('repository'),
+            # tracker_id = self.config.get('tracker_id'),
+            # due_date = foreign_issue.get('due'),
+            client = self.client
+        )
+        return issue
+
+    def add_foreign_issue_reference(self, issue, foreign_issue):
+        pass

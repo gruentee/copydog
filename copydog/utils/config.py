@@ -2,13 +2,16 @@
 import os
 import yaml
 
+
 class ImproperlyConfigured(Exception):
     """ Something wrong with config file
     """
 
+
 class MissigAttr(AttributeError):
     """ Config doesn't have specific value
     """
+
 
 class Config(object):
     """ Object-like config with dict inside.

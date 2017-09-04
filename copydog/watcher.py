@@ -4,7 +4,7 @@ import time
 import sched
 import itertools
 from copydog.utils import pandoc
-from copydog.adapters import RedmineAdapter, TrelloAdapter
+from copydog.adapters import BitbucketAdapter, TrelloAdapter
 from copydog.convertor import Mapper
 from copydog.storage.factory import StorageFactory
 from copydog.utils.task import periodic
@@ -15,7 +15,7 @@ log = getLogger('copydog')
 
 class Watch(object):
     available_services = {
-        'redmine': RedmineAdapter,
+        'bitbucket': BitbucketAdapter,
         'trello': TrelloAdapter
     }
 
@@ -56,8 +56,8 @@ class Watch(object):
         if full_sync:
             self.storage.reset_last_time_read()
         else:
-            if not self.storage.get_last_time_read('redmine'):
-                self.storage.mark_read('redmine')
+            if not self.storage.get_last_time_read('bitbucket'):
+                self.storage.mark_read('bitbucket')
                 self.storage.mark_read('trello')
 
     def run(self):
