@@ -81,7 +81,7 @@ class Bitbucket(ApiClient):
         for data in self.get_many('teams/{team}/members'.format(team=team)):
             yield Member(self, **data)
 
-    def statuses(self):
+    def states(self):
         # TODO: remove hard-coded statuses?
         states = ['new', 'open', 'resolved', 'on hold', 'invalid', 'duplicate', 'wontfix', 'closed']
         for idx, name in enumerate(states):
@@ -101,9 +101,7 @@ class Issue(ApiObject):
     date_fields = ('created_on', 'updated_on')
 
     def get_url(self):
-        return "{host}/repositories/{repository}/issues/{id}".format(host=self.client.host,
-                                                                     repository=self.client.build_api_url(),
-                                                                     id=self.id)
+        return self.links['html']['href']
 
     def validate(self):
         assert self.title is not None, "Issue title cannot be empty"

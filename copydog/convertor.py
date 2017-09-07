@@ -17,17 +17,25 @@ class Mapper(object):
     def save_list_status_mapping(self):
         """ TODO: Optimize lookup
         """
-        statuses = list(self.services['bitbucket'].client.statuses())
+        statuses = list(self.services['bitbucket'].client.states())
         lists = list(self.services['trello'].client.lists(self.config.clients.trello.board_id))
+        mapping = self.config.status_to_list_mapping
 
         for status in statuses:
-            for trello_list in lists:
-                # if status.name == trello_list.name:
-                self.storage.set_list_or_status_id(bitbucket_id=status.id, trello_id=trello_list.id)
-                log.debug('Mapped Status %s to Trello', status.name)
-                break
+            trello_list = self.config.status_to_list_mapping.get(status.name)
+            if trello_list:
+                self.storage.set_list_or_status_id(bitbucket_id=status.name, trello_id=mapping[status.name])
             else:
-                log.debug('Status %s not mapped to Trello', status.name)
+                self.storage.set_list_or_status_id(bitbucket_id=status.name, trello_id=mapping['new'])
+            # for trello_list in lists:
+            #     if self.config.status_to_list_mapping.get(status.name) == trello_list.id:
+            #         self.storage.set_list_or_status_id(bitbucket_id=status.id, trello_id=trello_list.id)
+            #         log.debug('Mapped Status %s to Trello', status.name)
+            #         break
+            #     else:
+            #         self.storage.set_list_or_status_id(bitbucket_id=status.id, trello_id=
+            #             self.config.status_to_list_mapping.get('new'))
+            #         log.debug('Status %s not mapped to Trello', status.name)
 
     def save_user_member_mapping(self):
         users = list(self.services['bitbucket'].client.members(self.config.clients.bitbucket.team))

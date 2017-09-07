@@ -25,7 +25,7 @@ class Storage(BaseStorage):
 
     def set_list_or_status_id(self, bitbucket_id, trello_id):
         pipe = self.redis.pipeline()
-        pipe.hset('redmine:list_status_mapping', bitbucket_id, trello_id)
+        pipe.hset('bitbucket:list_status_mapping', bitbucket_id, trello_id)
         pipe.hset('trello:list_status_mapping', trello_id, bitbucket_id)
         pipe.execute()
 
@@ -36,7 +36,7 @@ class Storage(BaseStorage):
         """ TODO: extract method, set_list_or_status_id
         """
         pipe = self.redis.pipeline()
-        pipe.hset('redmine:user_member_mapping', redmine_id, trello_id)
+        pipe.hset('bitbucket:user_member_mapping', redmine_id, trello_id)
         pipe.hset('trello:user_member_mapping', trello_id, redmine_id)
         pipe.execute()
 
@@ -71,7 +71,7 @@ class Storage(BaseStorage):
                 datetime.datetime.utcnow().replace(tzinfo = pytz.utc))
 
     def mark_written(self, service_name, item, foreign_id):
-        other_service = 'redmine' if service_name == 'trello' else 'trello'
+        other_service = 'bitbucket' if service_name == 'trello' else 'trello'
         pipe = self.redis.pipeline()
         pipe.hmset('{service_name}:items:{id}'.format(service_name=service_name, id=item.id),
                   {'opposite_id': foreign_id, 'updated': item.last_updated})
@@ -80,7 +80,7 @@ class Storage(BaseStorage):
         pipe.execute()
 
     def flush(self):
-        redmine = self.redis.keys(pattern='redmine:*')
+        redmine = self.redis.keys(pattern='bitbucket:*')
         trello = self.redis.keys(pattern='trello:*')
         keys_to_delete = redmine + trello
         if keys_to_delete:
